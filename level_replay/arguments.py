@@ -102,7 +102,7 @@ parser.add_argument(
     help='environment to train on')
 parser.add_argument(
     '--xpid',
-    default='latest',
+    default=None,
     help='name for the run - prefix to log files')
 parser.add_argument(
     '--log_dir',
@@ -113,6 +113,11 @@ parser.add_argument(
     action='store_true',
     default=False,
     help='disables CUDA training')
+parser.add_argument(
+    '--lstm',
+    action='store_true',
+    default=False,
+    help='enables LSTM')
 parser.add_argument(
     '--hidden_size',
     type=int,

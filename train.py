@@ -3,7 +3,8 @@
 #
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
-
+import matplotlib
+matplotlib.use('TKAgg')
 import copy
 import os
 import sys
@@ -90,6 +91,7 @@ def train(args, seeds):
 
     actor_critic = model_for_env_name(args, envs)       
     actor_critic.to(device)
+    print(actor_critic)
 
     rollouts = RolloutStorage(args.num_steps, args.num_processes,
                                 envs.observation_space.shape, envs.action_space,
@@ -198,10 +200,11 @@ def train(args, seeds):
 
             logging.info(f"\nUpdate {j} done, {total_num_steps} steps\n  ")
             logging.info(f"\nEvaluating on {args.num_test_seeds} test levels...\n  ")
-            eval_episode_rewards = evaluate(args, actor_critic, args.num_test_seeds, device)
+            eval_episode_rewards, transitions = evaluate(args, actor_critic, args.num_test_seeds, device)
+            plogger._save_data(transitions, f'test_trajectories_{j}.pkl')
 
             logging.info(f"\nEvaluating on {args.num_test_seeds} train levels...\n  ")
-            train_eval_episode_rewards = evaluate(args, actor_critic, args.num_test_seeds, device, start_level=0, num_levels=args.num_train_seeds, seeds=seeds)
+            train_eval_episode_rewards, transitions = evaluate(args, actor_critic, args.num_test_seeds, device, start_level=0, num_levels=args.num_train_seeds, seeds=seeds, level_sampler=level_sampler)
 
             stats = { 
                 "step": total_num_steps,
@@ -223,7 +226,7 @@ def train(args, seeds):
 
             if j == num_updates - 1:
                 logging.info(f"\nLast update: Evaluating on {args.num_test_seeds} test levels...\n  ")
-                final_eval_episode_rewards = evaluate(args, actor_critic, args.final_num_test_seeds, device)
+                final_eval_episode_rewards, transitions = evaluate(args, actor_critic, args.final_num_test_seeds, device)
 
                 mean_final_eval_episode_rewards = np.mean(final_eval_episode_rewards)
                 median_final_eval_episide_rewards = np.median(final_eval_episode_rewards)

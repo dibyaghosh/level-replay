@@ -227,3 +227,8 @@ class FileWriter:
     def _save_metadata(self) -> None:
         with open(self.paths["meta"], "w") as jsonfile:
             json.dump(self.metadata, jsonfile, indent=4, sort_keys=True)
+
+    def _save_data(self, data, fname):
+        with open(f"{self.basepath}/{fname}", 'wb') as f:
+            import pickle
+            pickle.dump(data, f)

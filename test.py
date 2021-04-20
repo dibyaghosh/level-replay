@@ -24,6 +24,11 @@ from baselines.common.vec_env import (
 )
 from level_replay.envs import make_lr_venv
 
+def get_np(tensor):
+    if isinstance(tensor, torch.Tensor):
+        return tensor.cpu().data.numpy()
+    else:
+        return tensor
 
 def evaluate(
     args, 
@@ -39,9 +44,9 @@ def evaluate(
     progressbar=None):
     actor_critic.eval()
         
-    if level_sampler:
-        start_level = level_sampler.seed_range()[0]
-        num_levels = 1
+    # if level_sampler:
+    #     start_level = level_sampler.seed_range()[0]
+    #     num_levels = 1
 
     eval_envs, level_sampler = make_lr_venv(
         num_envs=num_processes, env_name=args.env_name,
@@ -61,7 +66,8 @@ def evaluate(
     eval_recurrent_hidden_states = torch.zeros(
         num_processes, actor_critic.recurrent_hidden_state_size, device=device)
     eval_masks = torch.ones(num_processes, 1, device=device)
-
+    transitions = []
+    print(deterministic)
     while len(eval_episode_rewards) < num_episodes:
         with torch.no_grad():
             _, action, _, eval_recurrent_hidden_states = actor_critic.act(
@@ -70,8 +76,8 @@ def evaluate(
                 eval_masks,
                 deterministic=deterministic)
 
-        obs, _, done, infos = eval_envs.step(action)
-         
+        obs, r, done, infos = eval_envs.step(action)
+        transitions.append((get_np(r), get_np(done), infos))
         eval_masks = torch.tensor(
             [[0.0] if done_ else [1.0] for done_ in done],
             dtype=torch.float32,
@@ -92,7 +98,7 @@ def evaluate(
             .format(len(eval_episode_rewards), \
             np.mean(eval_episode_rewards), np.median(eval_episode_rewards)))
 
-    return eval_episode_rewards
+    return eval_episode_rewards, transitions
 
 
 def evaluate_saved_model(

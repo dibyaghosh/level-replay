@@ -48,7 +48,7 @@ def model_for_env_name(args, env):
         model = Policy(
             env.observation_space.shape, env.action_space.n,
             arch=args.arch,
-            base_kwargs={'recurrent': False, 'hidden_size': args.hidden_size})
+            base_kwargs={'recurrent': args.lstm, 'hidden_size': args.hidden_size})
     elif args.env_name.startswith('MiniGrid'):
         model = MinigridPolicy(
             env.observation_space.shape, env.action_space.n,
@@ -333,7 +333,7 @@ class ResNetBase(NNBase):
     Residual Network 
     """
     def __init__(self, num_inputs, recurrent=False, hidden_size=256, channels=[16,32,32]):
-        super(ResNetBase, self).__init__(recurrent, num_inputs, hidden_size)
+        super(ResNetBase, self).__init__(recurrent, hidden_size, hidden_size)
 
         self.layer1 = self._make_layer(num_inputs, channels[0])
         self.layer2 = self._make_layer(channels[0], channels[1])
